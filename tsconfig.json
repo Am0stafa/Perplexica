@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "module": "Node16",
     "moduleResolution": "Node16",
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["node", "express", "serve-static"],
     "target": "ESNext",
     "outDir": "dist",
     "sourceMap": false,
