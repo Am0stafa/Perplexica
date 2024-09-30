@@ -11,6 +11,7 @@ import {
   updateConfig,
 } from '../config';
 import logger from '../utils/logger';
+import { getAuthConfig, updateAuthConfig } from '../config';
 
 const router = express.Router();
 
@@ -77,6 +78,18 @@ router.post('/', async (req, res) => {
   updateConfig(updatedConfig);
 
   res.status(200).json({ message: 'Config updated' });
+});
+
+// Add these new routes inside the existing router
+router.get('/auth', (req, res) => {
+  const authConfig = getAuthConfig();
+  res.json({ enabled: authConfig.enabled });
+});
+
+router.post('/auth', (req, res) => {
+  const { enabled, username, password } = req.body;
+  updateAuthConfig({ enabled, username, password });
+  res.json({ message: 'Auth config updated' });
 });
 
 export default router;

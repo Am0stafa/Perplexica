@@ -8,6 +8,11 @@ interface Config {
   GENERAL: {
     PORT: number;
     SIMILARITY_MEASURE: string;
+    AUTH: {
+      enabled: boolean;
+      username: string;
+      password: string;
+    };
   };
   API_KEYS: {
     OPENAI: string;
@@ -70,4 +75,17 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
     path.join(__dirname, `../${configFileName}`),
     toml.stringify(config),
   );
+};
+
+// Add a new function to get and update auth config
+export const getAuthConfig = () => loadConfig().GENERAL.AUTH;
+
+export const updateAuthConfig = (authConfig: {
+  enabled: boolean;
+  username: string;
+  password: string;
+}) => {
+  const config = loadConfig();
+  config.GENERAL.AUTH = authConfig;
+  updateConfig(config);
 };

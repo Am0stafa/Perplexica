@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
+import AuthWrapper from '@/components/AuthWrapper';
+import { CookiesProvider } from 'react-cookie';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -28,7 +30,9 @@ export default function RootLayout({
     <html className="h-full" lang="en" suppressHydrationWarning>
       <body className={cn('h-full', montserrat.className)}>
         <ThemeProvider>
-          <Sidebar>{children}</Sidebar>
+          <AuthWrapper>
+            <Sidebar>{children}</Sidebar>
+          </AuthWrapper>
           <Toaster
             toastOptions={{
               unstyled: true,

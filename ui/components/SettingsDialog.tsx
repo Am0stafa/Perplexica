@@ -8,6 +8,8 @@ import React, {
   type SelectHTMLAttributes,
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
+import { Switch } from '@headlessui/react';
+import { useCookies } from 'react-cookie';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -87,6 +89,10 @@ const SettingsDialog = ({
   const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [authEnabled, setAuthEnabled] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [cookies, setCookie] = useCookies(['authEnabled', 'authUsername', 'authPassword']);
 
   useEffect(() => {
     if (isOpen) {
@@ -178,6 +184,35 @@ const SettingsDialog = ({
       setIsOpen(false);
 
       window.location.reload();
+    }
+  };
+
+  const saveAuthSettings = async () => {
+    if (authEnabled && (!username || !password)) {
+      // Show an error message or handle the case where fields are empty
+      return;
+    }
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: authEnabled, username, password }),
+      });
+      
+      // Set cookies
+      setCookie('authEnabled', authEnabled, { path: '/' });
+      if (authEnabled) {
+        setCookie('authUsername', username, { path: '/' });
+        setCookie('authPassword', password, { path: '/' });
+      } else {
+        setCookie('authUsername', '', { path: '/', maxAge: -1 });
+        setCookie('authPassword', '', { path: '/', maxAge: -1 });
+      }
+      
+      // Show success message
+    } catch (error) {
+      console.error('Failed to save auth settings:', error);
+      // Show error message
     }
   };
 
@@ -468,6 +503,58 @@ const SettingsDialog = ({
                         }
                       />
                     </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Enable Authentication
+                      </p>
+                      <Switch
+                        checked={authEnabled}
+                        onChange={setAuthEnabled}
+                        className={`${
+                          authEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                        } relative inline-flex h-6 w-11 items-center rounded-full`}
+                      >
+                        <span className="sr-only">Enable Authentication</span>
+                        <span
+                          className={`${
+                            authEnabled ? 'translate-x-6' : 'translate-x-1'
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+                        />
+                      </Switch>
+                    </div>
+                    {authEnabled && (
+                      <>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Username
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="Username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Password
+                          </p>
+                          <Input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          onClick={saveAuthSettings}
+                          className="bg-green-500 flex flex-row items-center space-x-2 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-opacity-50 rounded-full px-4 py-2"
+                          disabled={!username || !password}
+                        >
+                          Confirm Auth Settings
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
                 {isLoading && (
@@ -479,17 +566,19 @@ const SettingsDialog = ({
                   <p className="text-xs text-black/50 dark:text-white/50">
                     We&apos;ll refresh the page after updating the settings.
                   </p>
-                  <button
-                    onClick={handleSubmit}
-                    className="bg-[#24A0ED] flex flex-row items-center space-x-2 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full px-4 py-2"
-                    disabled={isLoading || isUpdating}
-                  >
-                    {isUpdating ? (
-                      <RefreshCw size={20} className="animate-spin" />
-                    ) : (
-                      <CloudUpload size={20} />
-                    )}
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleSubmit}
+                      className="bg-[#24A0ED] flex flex-row items-center space-x-2 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full px-4 py-2"
+                      disabled={isLoading || isUpdating}
+                    >
+                      {isUpdating ? (
+                        <RefreshCw size={20} className="animate-spin" />
+                      ) : (
+                        <CloudUpload size={20} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
