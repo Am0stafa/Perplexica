@@ -6,6 +6,7 @@ import modelsRouter from './models';
 import suggestionsRouter from './suggestions';
 import chatsRouter from './chats';
 import searchRouter from './search';
+import authSettingsRouter from './authSettings';
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use('/models', modelsRouter);
 router.use('/suggestions', suggestionsRouter);
 router.use('/chats', chatsRouter);
 router.use('/search', searchRouter);
+router.use('/auth-settings', authSettingsRouter);
 
 export default router;

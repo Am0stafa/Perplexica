@@ -17,3 +17,10 @@ export const chats = sqliteTable('chats', {
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),
 });
+
+export const authSettings = sqliteTable('auth_settings', {
+  id: integer('id').primaryKey(),
+  isEnabled: integer('is_enabled', { mode: 'boolean' }).notNull().default(false),
+  username: text('username'),
+  password: text('password'),
+});

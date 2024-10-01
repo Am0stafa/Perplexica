@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, Transition, Switch } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, {
   Fragment,
@@ -60,7 +60,7 @@ interface SettingsType {
   ollamaApiUrl: string;
 }
 
-const SettingsDialog = ({
+ const SettingsDialog = ({
   isOpen,
   setIsOpen,
 }: {
@@ -87,6 +87,9 @@ const SettingsDialog = ({
   const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAuthEnabled, setIsAuthEnabled] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -150,6 +153,23 @@ const SettingsDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      const fetchAuthSettings = async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth-settings`);
+          const data = await res.json();
+          setIsAuthEnabled(data.isEnabled);
+          setUsername(data.username || '');
+          setPassword(data.password || '');
+        } catch (error) {
+          console.error('Error fetching auth settings:', error);
+        }
+      };
+      fetchAuthSettings();
+    }
+  }, [isOpen]);
+
   const handleSubmit = async () => {
     setIsUpdating(true);
 
@@ -171,13 +191,43 @@ const SettingsDialog = ({
       localStorage.setItem('embeddingModel', selectedEmbeddingModel!);
       localStorage.setItem('openAIApiKey', customOpenAIApiKey!);
       localStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
+
+      // Remove the auth settings update from here
     } catch (err) {
       console.log(err);
     } finally {
       setIsUpdating(false);
       setIsOpen(false);
-
       window.location.reload();
+    }
+  };
+
+  // Add this new function to handle saving auth settings
+  const handleSaveAuthSettings = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isEnabled: isAuthEnabled, username, password }),
+      });
+
+      if (response.ok) {
+        // Show a success message
+        console.log('Authentication settings saved successfully');
+        
+        // Close the settings dialog
+        setIsOpen(false);
+
+        // Reload the page to force the authentication prompt
+        window.location.reload();
+      } else {
+        throw new Error('Failed to save authentication settings');
+      }
+    } catch (error) {
+      console.error('Error saving authentication settings:', error);
+      // Show an error message or toast notification here
     }
   };
 
@@ -468,6 +518,45 @@ const SettingsDialog = ({
                         }
                       />
                     </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-300">Enable Authentication</span>
+                      <Switch
+                        checked={isAuthEnabled}
+                        onChange={setIsAuthEnabled}
+                        className={`${
+                          isAuthEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                      >
+                        <span
+                          className={`${
+                            isAuthEnabled ? 'translate-x-6' : 'translate-x-1'
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </Switch>
+                    </div>
+                    {isAuthEnabled && (
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                        />
+                        <Input
+                          type="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button
+                          onClick={handleSaveAuthSettings}
+                          className="bg-[#24A0ED] flex flex-row items-center space-x-2 text-white hover:bg-opacity-85 transition duration-100 rounded-full px-3 py-1.5 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!username || !password}
+                        >
+                          Save Authentication Settings
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
                 {isLoading && (
