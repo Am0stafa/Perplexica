@@ -5,7 +5,13 @@ const nextConfig = {
       {
         hostname: 's2.googleusercontent.com',
       },
+      {
+        hostname: 'fonts.gstatic.com',
+      },
     ],
+  },
+  experimental: {
+    optimizeFonts: false,
   },
 };
 
